@@ -6,6 +6,18 @@ using UnityEngine.UIElements;
 using System.Diagnostics;
 
 
+/* Game Manager :
+ * Not complete yet
+ * 
+ * Idea behind this script is to give the players a way to interface with the table tennis menu
+ * We capture the MLClickable component from each button
+ * and add listeners to each button to tell when they've been pressed.
+ * 
+ * The event of pressing a button will eventually record the players name
+ * begin a timer, and then initialize the scoreboard.
+ * 
+ */
+
 public class GameManager : MonoBehaviour
 {
 
