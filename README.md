@@ -14,4 +14,4 @@ Also I think that creating a fun Table Tennis game that could be played in VR so
 
 Initial AI video down below : 
 =================
-[![Video](https://img.youtube.com/vi/0XjjUWD9HGE/0.jpg)]([https://www.youtube.com/watch?v=VIDEO_ID](https://youtu.be/0XjjUWD9HGE))
+[![Video](https://img.youtube.com/vi/0XjjUWD9HGE/0.jpg)](https://youtu.be/0XjjUWD9HGE)
