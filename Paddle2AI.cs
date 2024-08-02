@@ -31,6 +31,14 @@ public class Paddle2AI : MonoBehaviour
     private Vector3 originalPosition;
     public GameObject ball;
 
+
+    /* This script holds the AI that moves the paddle to respond to the ball entering its trigger zone.
+     *  It could be made to be more accurate, and the serialized numbers can be tweaked to make it a harder
+     *  opponent.
+     *  
+     *  One of the buttons from the game manager would enable this AI player for the normal human player to play against.
+     */
+
     void Start()
     {
         /*
