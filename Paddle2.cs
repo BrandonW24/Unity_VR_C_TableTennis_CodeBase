@@ -8,30 +8,13 @@ public class Paddle2 : MonoBehaviour
 {
     public GameObject ball;
     public GameObject ballSpawnPoint;
-    public GameObject hitTransformSpot;
-    // public TextMesh distanceText;
-    // public AudioSource hitAudio;
-    public float clubSpeed;
-    public int rangeNum;
-    public bool isDrivingRange;
-    public float forceMultiplier = 10f; // Add this line to define a force multiplier
-    public float hitThreshold = 0.1f; // Add this line to define a hit threshold
-
     public Rigidbody ballRigidbody;
     public MLGrab grabComponent;
+    public float forceMultiplier = 10f;
+    public float sphereCastRadius = 0.1f; // Radius for sphere cast
+    public float maxDetectionDistance = 0.5f; // Maximum distance to check for collisions
+
     private bool isHeld;
-    private Vector3 startingClubPosition;
-    private Quaternion startingClubRotation;
-    private Vector3 currentClubPosition;
-    private Vector3 previousClubPosition;
-    private float deltaDistance;
-    private float ballToClubDistance;
-    private float timeElapsed;
-    private float timeBetweenSignUpdates = 3.0f;
-    private bool debugMode = true; // Set to true for enabling debug mode
-    private Transform currentPlayer;
-    private Transform owner;
-    private float defaultScale;
 
     void Start()
     {
@@ -46,39 +29,42 @@ public class Paddle2 : MonoBehaviour
         }
 
         isHeld = false;
-
-        startingClubPosition = transform.position;
-        startingClubRotation = transform.rotation;
-        currentClubPosition = hitTransformSpot.transform.position;
-
-        previousClubPosition = transform.position;
-
-        defaultScale = transform.localScale.x; // Assuming uniform scaling
     }
 
     void FixedUpdate()
     {
-        if (isHeld)
+        if (isHeld && ball != null)
         {
-            // owner = MassiveLoopRoom.FindPlayerCloseToPosition(transform.position);
-            currentClubPosition = hitTransformSpot.transform.position;
+            Vector3 direction = ball.transform.position - transform.position;
+            RaycastHit hit;
 
-            if (previousClubPosition != Vector3.zero)
+            // Perform a sphere cast in the direction of the ball to check for collisions
+            if (Physics.SphereCast(transform.position, sphereCastRadius, direction, out hit, maxDetectionDistance))
             {
-                deltaDistance = Vector3.Distance(currentClubPosition, previousClubPosition);
-
-                if (ball != null)
+                if (hit.collider.gameObject == ball)
                 {
-                    CalculateDistance();
-                    ballToClubDistance = Vector3.Distance(ball.transform.position, currentClubPosition);
-                    // Debug.Log("Ball to club distance : " + ballToClubDistance);
-                    if (deltaDistance > (ballToClubDistance - hitThreshold))
-                    {
-                        HitBallWithClub();
-                    }
+                    Debug.Log("SphereCast detected the ball. Applying force.");
+
+                    Vector3 hitDirection = direction.normalized;
+
+                    // Apply force to the ball
+                    ballRigidbody.AddForce(hitDirection * forceMultiplier, ForceMode.Impulse);
                 }
             }
-            previousClubPosition = currentClubPosition;
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (isHeld && other.gameObject == ball)
+        {
+            Vector3 hitDirection = (ball.transform.position - transform.position).normalized;
+
+            // Apply force to the ball
+            ballRigidbody.AddForce(hitDirection * forceMultiplier, ForceMode.Impulse);
+
+            Debug.Log("Ball hit by paddle.");
+            Debug.Log("Hit direction: " + hitDirection);
         }
     }
 
@@ -95,58 +81,13 @@ public class Paddle2 : MonoBehaviour
     private void OnPrimaryGrabBegin()
     {
         isHeld = true;
-        Debug.Log("Club grabbed.");
+        Debug.Log("Paddle grabbed.");
     }
 
     private void OnPrimaryGrabEnd()
     {
         isHeld = false;
-        Debug.Log("Club released.");
-    }
-
-    private void CalculateDistance()
-    {
-        if (isHeld)
-        {
-            float ballDistance = 0.0f;
-            if (ball != null)
-            {
-                ballDistance = Vector3.Distance(ball.transform.position, hitTransformSpot.transform.position);
-                ballDistance = Mathf.Floor(ballDistance * 10) / 10;
-                // Debug.Log("Calculated ball distance: " + ballDistance + " yds.");
-            }
-
-            UpdateDistanceSigns(ballDistance);
-        }
-    }
-
-    private void UpdateDistanceSigns(float ballDistance)
-    {
-        /* distanceText.text = ballDistance.ToString() + " yds";
-
-        // Implement network updates if needed
-        timeElapsed += Time.deltaTime;
-        if (timeElapsed > timeBetweenSignUpdates)
-        {
-            // Send network updates
-            timeElapsed = 0;
-        } */
-    }
-
-    private void HitBallWithClub()
-    {
-        if (isHeld)
-        {
-            Vector3 clubForward = hitTransformSpot.transform.forward;
-            Vector3 ballVelocity = clubForward * deltaDistance * forceMultiplier;
-            ballRigidbody.AddForce(ballVelocity, ForceMode.Impulse);
-            // hitAudio.Play();
-
-            Debug.Log("Hit ball with club.");
-            Debug.Log("Club forward vector: " + clubForward);
-            Debug.Log("Delta distance: " + deltaDistance);
-            Debug.Log("Applied force: " + ballVelocity);
-        }
+        Debug.Log("Paddle released.");
     }
 
     private void SpawnBall()
