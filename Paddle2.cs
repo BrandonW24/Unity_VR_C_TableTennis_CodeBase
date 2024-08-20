@@ -15,10 +15,16 @@ public class Paddle2 : MonoBehaviour
     public float maxDetectionDistance = 0.5f; // Maximum distance to check for collisions
 
     private bool isHeld;
+    private bool clientIsOwner = false;
 
     void Start()
     {
         Debug.Log("Paddle2 start");
+
+        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            clientIsOwner = true;
+        }
 
         if (grabComponent != null)
         {
@@ -33,6 +39,11 @@ public class Paddle2 : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!clientIsOwner)
+        {
+            return; // Only the master client handles physics updates
+        }
+
         if (isHeld && ball != null)
         {
             Vector3 direction = ball.transform.position - transform.position;
@@ -56,6 +67,11 @@ public class Paddle2 : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        if (!clientIsOwner)
+        {
+            return; // Only the master client handles collision logic
+        }
+
         if (isHeld && other.gameObject == ball)
         {
             Vector3 hitDirection = (ball.transform.position - transform.position).normalized;
@@ -92,7 +108,7 @@ public class Paddle2 : MonoBehaviour
 
     private void SpawnBall()
     {
-        if (ball != null)
+        if (ball != null && clientIsOwner)
         {
             ball.transform.position = ballSpawnPoint.transform.position;
             ballRigidbody = ball.GetComponent<Rigidbody>();

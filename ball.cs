@@ -20,6 +20,8 @@ public class Ball : MonoBehaviour
     public AudioClip[] ballSounds;
     private int randomIndex;
 
+    private bool clientIsOwner = false;
+
     void OnPrimaryTriggerDown()
     {
         // Handle primary trigger down logic if needed
@@ -32,11 +34,15 @@ public class Ball : MonoBehaviour
 
     void OnPrimaryGrabBegin()
     {
-        // Pause physics when the ball is grabbed
         if (rb != null)
         {
             rb.isKinematic = true;
             isGrabbed = true;
+        }
+
+        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            clientIsOwner = true;
         }
 
         Debug.Log("Grabbed");
@@ -44,31 +50,30 @@ public class Ball : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        int randomInt = Random.Range(0, 2);
+        if (!MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            return; // Only master client handles collision logic
+        }
+
+        int randomInt = Random.Range(0, ballSounds.Length);
         ballSound.clip = ballSounds[randomInt];
         ballSound.Play();
 
         if (collision.gameObject.name == "Floor")
         {
-            int i = Random.Range(0, 2);
-
+            int i = Random.Range(0, respawnpos.Length);
             transform.position = respawnpos[i].position;
-            GetComponent<Rigidbody>().velocity = Vector3.zero; // Reset the ball's velocity
+            rb.velocity = Vector3.zero; // Reset the ball's velocity
             Debug.Log("Ball respawned at the given position.");
-
-            
-
         }
     }
 
     void OnPrimaryGrabEnd()
     {
-        // Apply custom physics when the ball is released
         if (rb != null)
         {
             rb.isKinematic = false;
             isGrabbed = false;
-            // Calculate the velocity based on previous and current position
             velocity = (transform.position - previousPosition) / Time.deltaTime;
             rb.velocity = velocity * grabComponent.ForceMultiplier;
         }
@@ -80,6 +85,11 @@ public class Ball : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         ballRadius = GetComponent<SphereCollider>().radius;
 
+        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            clientIsOwner = true;
+        }
+
         if (grabComponent != null)
         {
             grabComponent.OnPrimaryGrabBegin.AddListener(OnPrimaryGrabBegin);
@@ -90,49 +100,32 @@ public class Ball : MonoBehaviour
 
         randomIndex = 0;
 
-        // Set continuous collision detection mode
         if (rb != null)
         {
             rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         }
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        // Update the previous position only when the ball is grabbed
-        if (isGrabbed)
+        if (!clientIsOwner)
         {
-            previousPosition = transform.position;
+            return; // Only master client handles physics updates
         }
 
-        /*
-        // Perform spherecasting for custom collision detection
-        RaycastHit hit;
-        Vector3 direction = rb.velocity.normalized;
-        float distance = rb.velocity.magnitude * Time.deltaTime;
-
-        if (Physics.SphereCast(transform.position, ballRadius, direction, out hit, distance))
+        if (!isGrabbed)
         {
-            if (hit.collider.CompareTag("Paddle"))
+            rb.AddForce(Vector3.down * 1);
+
+            Vector3 direction = -rb.velocity.normalized;
+            float dragForceMagnitude = 1.225f * rb.velocity.magnitude * rb.velocity.magnitude * 0.47f * (Mathf.PI * 0.4f * 0.4f) / 2;
+
+            if (direction != Vector3.zero)
             {
-                Debug.Log("Spherecast detected collision with paddle");
-                Rigidbody paddleRb = hit.collider.GetComponent<Rigidbody>();
-                if (paddleRb != null)
-                {
-                    // Calculate the impact velocity
-                    Vector3 paddleVelocity = paddleRb.velocity;
-                    Vector3 impactVelocity = paddleVelocity * grabComponent.ForceMultiplier;
-                    
-
-
-                    // Apply the impact velocity to the ball
-                    rb.velocity += impactVelocity;
-
-                    // Adjust the ball's position to prevent clipping
-                    transform.position = hit.point;
-                }
+                rb.AddForce(direction * dragForceMagnitude);
             }
         }
-    }*/
+
+        previousPosition = transform.position;
     }
 }
