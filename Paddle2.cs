@@ -41,7 +41,14 @@ public class Paddle2 : MonoBehaviour
     {
         if (!clientIsOwner)
         {
-            return; // Only the master client handles physics updates
+            if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+            {
+                clientIsOwner = true;
+            }
+            else
+            {
+                return; // Only the master client handles physics updates
+            }
         }
 
         if (isHeld && ball != null)

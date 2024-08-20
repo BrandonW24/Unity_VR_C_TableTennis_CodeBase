@@ -89,6 +89,10 @@ public class Ball : MonoBehaviour
         {
             clientIsOwner = true;
         }
+        else
+        {
+          //  rb.isKinematic = true;
+        }
 
         if (grabComponent != null)
         {
@@ -110,12 +114,19 @@ public class Ball : MonoBehaviour
     {
         if (!clientIsOwner)
         {
-            return; // Only master client handles physics updates
+            if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+            {
+                clientIsOwner = true;
+            }
+            else
+            {
+              return; // Only master client handles physics updates
+            }
         }
 
         if (!isGrabbed)
         {
-            rb.AddForce(Vector3.down * 1);
+            rb.AddForce(Vector3.down * 30);
 
             Vector3 direction = -rb.velocity.normalized;
             float dragForceMagnitude = 1.225f * rb.velocity.magnitude * rb.velocity.magnitude * 0.47f * (Mathf.PI * 0.4f * 0.4f) / 2;
