@@ -50,10 +50,10 @@ public class Ball : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (!MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+      /*  if (!MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
         {
             return; // Only master client handles collision logic
-        }
+        }*/
 
         int randomInt = Random.Range(0, ballSounds.Length);
         ballSound.clip = ballSounds[randomInt];
@@ -112,17 +112,6 @@ public class Ball : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!clientIsOwner)
-        {
-            if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
-            {
-                clientIsOwner = true;
-            }
-            else
-            {
-              return; // Only master client handles physics updates
-            }
-        }
 
         if (!isGrabbed)
         {

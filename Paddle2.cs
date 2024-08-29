@@ -17,40 +17,12 @@ public class Paddle2 : MonoBehaviour
     private bool isHeld;
     private bool clientIsOwner = false;
 
-    void Start()
+    const string EVENT_ID = "HitEvent";
+    EventToken token;
+
+
+    private void OnHitEvent(object[] args)
     {
-        Debug.Log("Paddle2 start");
-
-        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
-        {
-            clientIsOwner = true;
-        }
-
-        if (grabComponent != null)
-        {
-            grabComponent.OnPrimaryGrabBegin.AddListener(OnPrimaryGrabBegin);
-            grabComponent.OnPrimaryGrabEnd.AddListener(OnPrimaryGrabEnd);
-            grabComponent.OnPrimaryTriggerDown.AddListener(SpawnBall);
-            grabComponent.OnPrimaryTriggerUp.AddListener(OnPrimaryTriggerUp);
-        }
-
-        isHeld = false;
-    }
-
-    void FixedUpdate()
-    {
-        if (!clientIsOwner)
-        {
-            if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
-            {
-                clientIsOwner = true;
-            }
-            else
-            {
-                return; // Only the master client handles physics updates
-            }
-        }
-
         if (isHeld && ball != null)
         {
             Vector3 direction = ball.transform.position - transform.position;
@@ -72,23 +44,62 @@ public class Paddle2 : MonoBehaviour
         }
     }
 
+
+    void Start()
+    {
+        Debug.Log("Paddle2 start");
+
+        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            clientIsOwner = true;
+        }
+
+        if (grabComponent != null)
+        {
+            grabComponent.OnPrimaryGrabBegin.AddListener(OnPrimaryGrabBegin);
+            grabComponent.OnPrimaryGrabEnd.AddListener(OnPrimaryGrabEnd);
+            grabComponent.OnPrimaryTriggerDown.AddListener(SpawnBall);
+            grabComponent.OnPrimaryTriggerUp.AddListener(OnPrimaryTriggerUp);
+            token = this.AddEventHandler(EVENT_ID, OnHitEvent);
+
+        }
+
+        isHeld = false;
+    }
+
+    void FixedUpdate()
+    {
+
+          if (isHeld && ball != null)
+          {
+              Vector3 direction = ball.transform.position - transform.position;
+              RaycastHit hit;
+
+              // Perform a sphere cast in the direction of the ball to check for collisions
+              if (Physics.SphereCast(transform.position, sphereCastRadius, direction, out hit, maxDetectionDistance))
+              {
+                  if (hit.collider.gameObject == ball)
+                  {
+                      Debug.Log("SphereCast detected the ball. Applying force.");
+
+                      Vector3 hitDirection = direction.normalized;
+
+                    // Apply force to the ball
+                    ballRigidbody.AddForce(hitDirection * forceMultiplier, ForceMode.Impulse);
+                    this.InvokeNetwork(EVENT_ID, EventTarget.All, null);
+                }
+            }
+          }
+
+
+    }
+
     void OnTriggerEnter(Collider other)
     {
-        if (!clientIsOwner)
-        {
-            return; // Only the master client handles collision logic
-        }
 
-        if (isHeld && other.gameObject == ball)
-        {
-            Vector3 hitDirection = (ball.transform.position - transform.position).normalized;
+        this.InvokeNetwork(EVENT_ID, EventTarget.All, null);
 
-            // Apply force to the ball
-            ballRigidbody.AddForce(hitDirection * forceMultiplier, ForceMode.Impulse);
 
-            Debug.Log("Ball hit by paddle.");
-            Debug.Log("Hit direction: " + hitDirection);
-        }
     }
 
     private void OnPrimaryTriggerDown()
