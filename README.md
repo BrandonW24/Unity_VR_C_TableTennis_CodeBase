@@ -38,3 +38,57 @@ This script powers a fully interactive jukebox in Unity, complete with dynamic s
 This script is ideal for interactive audio experiences in games, VR/AR environments, or any Unity-based application where music playback and visualization are required.
 
 ---
+# Dynamic Size and Throw Script for Unity (VR)
+
+This script adds dynamic interactivity to VR objects using the **MLGrab** system, enabling realistic resizing and throwing mechanics. Perfect for VR projects requiring intuitive and immersive object manipulation.
+
+## Features
+
+- **Primary Grab (One-Handed Interaction):**
+  - Allows picking up objects and holding them in hand.
+  - Objects can be thrown with realistic impulse physics when released.
+  - Throw force is customizable and clamped to ensure consistent behavior.
+
+- **Secondary Grab (Two-Handed Interaction):**
+  - Enables resizing of objects based on the distance between hands.
+  - Size changes are dynamically applied in real-time while holding the object.
+  - Adjustable minimum and maximum scale limits for precise control.
+
+- **Customizable Parameters:**
+  - `minSize` and `maxSize`: Relative scale limits for resizing.
+  - `absoluteMinSize` and `absoluteMaxSize`: Absolute size limits to prevent extreme scaling.
+  - `throwForceMultiplier`: Strength of the throwing force.
+  - `maxThrowForce`: Caps the maximum force applied during a throw.
+
+- **Realistic Physics Integration:**
+  - Dynamically calculates and applies force in the hand's forward direction on release.
+  - Ensures smooth and predictable interactions using Unity's Rigidbody system.
+
+- **Event-Driven System:**
+  - Custom event handling for triggering additional behaviors (e.g., network synchronization) when throwing objects.
+
+## How It Works
+
+1. **Primary Grab:**
+   - When the object is grabbed, it follows the motion of the player’s hand.
+   - On release, a force is applied in the hand's forward direction, simulating a realistic throw.
+
+2. **Secondary Grab:**
+   - When both hands grab the object, the script tracks the distance between them.
+   - The object's scale changes dynamically based on the hand distance, with customizable limits to prevent excessive resizing.
+
+3. **Physics Integration:**
+   - A Rigidbody component ensures the object interacts naturally with the environment after release or resizing.
+
+## Usage
+
+- Attach the script to an object with an **MLGrab** component.
+- Assign the `objectToChange` field to the target GameObject.
+- Ensure the object has a Rigidbody component for physics interactions.
+- Configure size and throw parameters in the Inspector for your specific use case.
+
+## Example Code Behavior
+
+- When grabbing and releasing, the console logs the applied throw force for debugging:
+  ```plaintext
+  Object thrown with impulse force: [force_vector]
