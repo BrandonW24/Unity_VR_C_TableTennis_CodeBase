@@ -15,3 +15,26 @@ Also I think that creating a fun small Table Tennis game that could be played in
 Initial AI video down below : 
 =================
 [![Video](https://img.youtube.com/vi/0XjjUWD9HGE/0.jpg)](https://youtu.be/0XjjUWD9HGE)
+
+# 🎵 Jukebox Script for Unity
+
+This script powers a fully interactive jukebox in Unity, complete with dynamic song playback, an audio visualizer, and user-friendly controls. Designed for projects that require immersive audio experiences, the Jukebox script integrates seamlessly into Unity's audio system and includes customizable features for enhanced functionality.
+
+## Key Features
+- **Audio Playback**: Supports a playlist of audio clips with play, pause, skip forward, and skip backward functionality.
+- **Autoplay**: Automatically plays the next song in the playlist when the current one finishes, with the ability to toggle autoplay on or off.
+- **Visualizer Integration**: Generates dynamic visual effects synchronized with the audio spectrum data for an engaging visual experience.
+- **Volume Control**: Provides adjustable volume settings with smooth transitions.
+- **Progress Bar**: Displays the current playback time of the song via a slider that updates in real time.
+- **Customizable Buttons**: Includes clickable buttons for all playback controls, with visual feedback to indicate states like pause/play and autoplay on/off.
+- **Song Title Display**: Displays the name of the current song using Unity's TextMeshPro.
+
+## How It Works
+1. Attach the script to a GameObject in your Unity scene.
+2. Configure the `Songs` array with your desired audio clips.
+3. Hook up the clickable buttons and visualizer GameObjects in the Unity Inspector.
+4. Enjoy an immersive jukebox experience with autoplay, real-time visualizer updates, and easy-to-use controls.
+
+This script is ideal for interactive audio experiences in games, VR/AR environments, or any Unity-based application where music playback and visualization are required.
+
+---
