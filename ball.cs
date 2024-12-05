@@ -13,11 +13,14 @@ public class Ball : MonoBehaviour
     private bool isGrabbed = false;
     private float ballRadius;
 
-    public Collider Floor;
+    public Collider LeftFloor;
+
+    public Collider RightFloor;
 
     public Transform[] respawnpos;
     public AudioSource ballSound;
     public AudioClip[] ballSounds;
+    public GameObject BallRespawnPosition;
     private int randomIndex;
 
     private bool clientIsOwner = false;
@@ -34,6 +37,8 @@ public class Ball : MonoBehaviour
 
     void OnPrimaryGrabBegin()
     {
+        Debug.Log($" Grab Began Current owner : {gameObject.GetOwner()}");
+
         if (rb != null)
         {
             rb.isKinematic = true;
@@ -59,10 +64,14 @@ public class Ball : MonoBehaviour
         ballSound.clip = ballSounds[randomInt];
         ballSound.Play();
 
-        if (collision.gameObject.name == "Floor")
+        if (collision.gameObject.name == "LeftFloor")
         {
-            int i = Random.Range(0, respawnpos.Length);
-            transform.position = respawnpos[i].position;
+            transform.position = respawnpos[0].position;
+            rb.velocity = Vector3.zero; // Reset the ball's velocity
+            Debug.Log("Ball respawned at the given position.");
+        }else if(collision.gameObject.name == "RightFloor")
+        {
+            transform.position = respawnpos[1].position;
             rb.velocity = Vector3.zero; // Reset the ball's velocity
             Debug.Log("Ball respawned at the given position.");
         }
@@ -70,17 +79,34 @@ public class Ball : MonoBehaviour
 
     void OnPrimaryGrabEnd()
     {
+        /*
         if (rb != null)
         {
             rb.isKinematic = false;
             isGrabbed = false;
             velocity = (transform.position - previousPosition) / Time.deltaTime;
             rb.velocity = velocity * grabComponent.ForceMultiplier;
+        }*/
+        isGrabbed = false;
+
+        if (MassiveLoopRoom.GetLocalPlayer().IsMasterClient)
+        {
+            gameObject.RequestOwnership();
+            rb.isKinematic = false;
+            
+            velocity = (transform.position - previousPosition) / Time.deltaTime;
+            rb.velocity = velocity * grabComponent.ForceMultiplier;
+
+            Debug.Log($" Greb ended Current owner : {gameObject.GetOwner()}");
         }
+
+
     }
 
     void Start()
     {
+        Debug.Log($" Ball start Current owner : {gameObject.GetOwner()}");
+
         grabComponent = GetComponent<MLGrab>();
         rb = GetComponent<Rigidbody>();
         ballRadius = GetComponent<SphereCollider>().radius;
