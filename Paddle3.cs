@@ -57,6 +57,13 @@ public class Paddle2 : MonoBehaviour
     [SerializeField] private LineRenderer trajectoryLine; // Assign this in the inspector
     [SerializeField] private int lineSegmentCount = 20; // Number of points for the line to show trajectory
 
+    // Size limits for the golf club
+    [SerializeField] private float minSize = 0.5f; // Minimum scale factor
+    [SerializeField] private float maxSize = 2.0f; // Maximum scale factor
+    private float initialDistance; // Distance at the time of secondary grab
+    private Vector3 initialScale;  // Scale at the time of secondary grab
+    private bool SizeChange_Flag = false;
+    [SerializeField] public GameObject golfClub;
     private void OnHitEvent(object[] args)
     {
         if (isHeld && ball != null)
@@ -92,6 +99,37 @@ public class Paddle2 : MonoBehaviour
         ReleaseSwing();
     }
 
+
+
+    private void OnVRModeSecondaryGrab()
+    {
+        if (grabComponent.PrimaryHand && grabComponent.SecondaryHand)
+        {
+            // Enable size change
+            SizeChange_Flag = true;
+
+            // Store the initial distance and scale
+            initialDistance = Vector3.Distance(
+                grabComponent.PrimaryHand.transform.position,
+                grabComponent.SecondaryHand.transform.position
+            );
+            initialScale = golfClub.transform.localScale;
+
+            Debug.Log($"[Secondary Grab] Initial Distance: {initialDistance}, Initial Scale: {initialScale}");
+        }
+        else
+        {
+            Debug.LogWarning("[Secondary Grab] Either PrimaryHand or SecondaryHand is missing!");
+        }
+    }
+
+    private void OnVRModeSecondaryGrab_End()
+    {
+        // Disable size change
+        SizeChange_Flag = false;
+        Debug.Log("[Secondary Grab End] Size change disabled.");
+    }
+
     private void OnVRModeTriggerDown()
     {
         if (!MassiveLoopClient.IsInDesktopMode)
@@ -115,6 +153,9 @@ public class Paddle2 : MonoBehaviour
             grabComponent.OnPrimaryGrabEnd.AddListener(OnPrimaryGrabEnd);
             grabComponent.OnPrimaryTriggerUp.AddListener(OnPrimaryTriggerUp);
             grabComponent.OnPrimaryTriggerDown.AddListener(OnVRModeTriggerDown);
+            grabComponent.OnSecondaryGrabBegin.AddListener(OnVRModeSecondaryGrab);
+            grabComponent.OnSecondaryGrabEnd.AddListener(OnVRModeSecondaryGrab_End);
+
             token = this.AddEventHandler(EVENT_ID, OnHitEvent);
             grabToken = this.AddEventHandler(EVENT_Grab_Key, OnGrabKeyPressEvent);
             chargeToken = this.AddEventHandler(EVENT_Charge_Power, OnTriggerDownPress);
@@ -133,6 +174,30 @@ public class Paddle2 : MonoBehaviour
         {
             paddleVelocity = (transform.position - previousPosition) / Time.fixedDeltaTime;
             previousPosition = transform.position;
+
+            if (SizeChange_Flag && grabComponent.PrimaryHand && grabComponent.SecondaryHand)
+            {
+                // Calculate the current distance between hands
+                float currentDistance = Vector3.Distance(
+                    grabComponent.PrimaryHand.transform.position,
+                    grabComponent.SecondaryHand.transform.position
+                );
+
+                // Determine the scaling factor based on the distance ratio
+                float scaleFactor = Mathf.Clamp(currentDistance / initialDistance, minSize, maxSize);
+
+                // Apply the new scale
+                golfClub.transform.localScale = initialScale * scaleFactor;
+
+                // Size check log
+              //  Debug.Log($"[FixedUpdate] Current Distance: {currentDistance}, Scale Factor: {scaleFactor}, New Scale: {golfClub.transform.localScale}");
+            }
+            else if (!SizeChange_Flag)
+            {
+                //To determine if the flag is being set correctly. Which it is. But in case you wanted to check that, here it is.
+               // Debug.Log("[FixedUpdate] SizeChange_Flag is false, skipping size adjustment.");
+            }
+
 
             if (ball != null && Time.time >= lastHitTime + hitCooldown) // Check hit cooldown
             {
@@ -154,6 +219,16 @@ public class Paddle2 : MonoBehaviour
                             // Spawn VFX with a cooldown
                             if (Time.time >= lastEffectSpawnTime + effectCooldown)
                             {
+                                // I can use this as a tally counter for number of hits during the current hole, eventually use for the scoreboard.
+                                /* Because hits are still detected, but there needs to be multiple hits within
+                                *  a certain threshold to allow players to hit their golf balls upwards or at 
+                                *  interesting angles. Imposing a limiter on how often VR players can hit successfully-- hinders the possibilities of
+                                *  directions they can hit their ball, and thus makes the game less fun for VR players.
+                                *
+                                * The game should aim to be more fun for the players were possible, while also being safe for their hardware, which is why
+                                * this limiter is imposed on the instantiation, synchronization and destruction of the VFX here.
+                                *
+                                */
                                 Object.Instantiate(VFXHit, ball.transform.position, Quaternion.identity);
                                 lastEffectSpawnTime = Time.time; // Update the last effect spawn time
                             }
@@ -165,6 +240,8 @@ public class Paddle2 : MonoBehaviour
             }
         }
 
+
+        //Desktop mode mechanic
         if (isCharging)
         {
             currentCharge += chargeRate * Time.fixedDeltaTime;
