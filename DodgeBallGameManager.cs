@@ -56,9 +56,20 @@ public class DodgeBallGameManager : MonoBehaviour
 
     public void OnStartGameEvent(object[] args)
     {
+
+
+
+
         isGameActive = true;
         stopwatch.Start();
         TeleportPlayersToArena();
+
+        if (isGameActive == true)
+        {
+            taggersClickable.gameObject.SetActive(false);
+            runnersClickable.gameObject.SetActive(false);
+        }
+
     }
 
     public void OnplayerClickStart(MLPlayer player)
@@ -121,7 +132,7 @@ public class DodgeBallGameManager : MonoBehaviour
             }
         }
 
-        UpdateTeamText();
+        
     }
 
     private void AssignTeam(MLPlayer player, string team)
@@ -265,6 +276,13 @@ public class DodgeBallGameManager : MonoBehaviour
         MLPlayer localPlayer = MassiveLoopRoom.GetLocalPlayer();
         localPlayer.SetProperty("team", "none");
 
+
+        if (isGameActive == false)
+        {
+            taggersClickable.gameObject.SetActive(true);
+            runnersClickable.gameObject.SetActive(true);
+        }
+
     }
 
 
@@ -283,6 +301,8 @@ public class DodgeBallGameManager : MonoBehaviour
         }
         //Teleport the player back to spawn
         player.Teleport(RespawnPosition.transform.position);
+
+        UpdateTeamText();
 
     }
 
