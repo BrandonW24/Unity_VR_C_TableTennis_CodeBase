@@ -87,6 +87,7 @@ public class DodgeballScript : MonoBehaviour
 
         if (DodgeBallGameManagerSCRIPTReference.isGameActive == false)
         {
+            DodgeBallGameManagerSCRIPTReference.OnResetBallPosition();
             grabComponent.ForceRelease();
             ballRigidbody.isKinematic = true;
         }else if(DodgeBallGameManagerSCRIPTReference.isGameActive == true)
@@ -167,13 +168,14 @@ public class DodgeballScript : MonoBehaviour
             }
 
             // Apply the force as an impulse
-            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
-            //  this.InvokeNetwork(EVENT_ID_Throw, EventTarget.Master, null, throwForce);
+        //    objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
+            Debug.Log($"Object thrown with impulse force: {throwForce}");
+            this.InvokeNetwork(EVENT_ID_Throw, EventTarget.All, null, throwForce, this.gameObject.GetInstanceID());
 
 
             // Debug visualization for force direction
             //    Debug.DrawRay(transform.position, releaseDirection * 2.0f, Color.red, 2.0f);
-            Debug.Log($"Object thrown with impulse force: {throwForce}");
+           
             //   this.InvokeNetwork(EVENT_ID_Throw, EventTarget.Master, null, throwForce);
         }
 
@@ -219,8 +221,41 @@ public class DodgeballScript : MonoBehaviour
 
     private void OnThrowEvent(object[] args)
     {
-        Debug.Log("Throw event triggered.");
-        objectRigidbody.AddForce((Vector3)args[0], ForceMode.Impulse);
+        Debug.Log($"Throw event triggered. Passed in force amount : {(Vector3)args[0]}");
+
+        if ((int)args[1] != this.gameObject.GetInstanceID() || this.gameObject == null)
+        {
+            return;
+        }
+
+        if (this == null || gameObject == null || gameObject.name == null || args[0] == null)
+        {
+            return;
+        }
+
+        // Calculate the release direction based on the hand's orientation
+        Vector3 releaseDirection = this.gameObject.transform.forward;
+
+        // Scale the release force
+        Vector3 throwForce = releaseDirection * throwForceMultiplier;
+
+        // Clamp the force to a maximum value
+        if (throwForce.magnitude > maxThrowForce)
+        {
+            throwForce = throwForce.normalized * maxThrowForce;
+        }
+
+
+        if (MassiveLoopClient.IsMasterClient)
+        {
+        //    this.gameObject.RequestOwnership();
+            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
+        }
+        else
+        {
+            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
+        }
+
 
     }
 

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Diagnostics;
 using ML.SDK;
 using TMPro;
+using System.Linq;
 
 public class DodgeBallGameManager : MonoBehaviour
 {
@@ -14,6 +15,11 @@ public class DodgeBallGameManager : MonoBehaviour
     [SerializeField]
     private GameObject RedTeleportObjectLocation;
 
+    [SerializeField]
+    private GameObject ResetBallPosition;
+
+    [SerializeField]
+    private GameObject GameBall;
 
     [SerializeField]
     private GameObject RespawnPosition;
@@ -54,22 +60,47 @@ public class DodgeBallGameManager : MonoBehaviour
 
     public bool isGameActive = false;
 
+    public GameObject BluePortal;
+    public GameObject RedPortal;
+
+    public GameObject BlueCelebration;
+    public GameObject RedCelebration;
+    public GameObject Tip;
+    public Collider ArenaCollider;
+
     public void OnStartGameEvent(object[] args)
     {
 
 
 
+        GameStatusText.text = "Game Active";
+        GameStatusText.color = Color.green;
 
         isGameActive = true;
         stopwatch.Start();
         TeleportPlayersToArena();
 
+        Tip.SetActive(true);
+
+        BluePortal.SetActive(false);
+        RedPortal.SetActive(false);
+
+        BlueCelebration.SetActive(false);
+        RedCelebration.SetActive(false);
+
         if (isGameActive == true)
         {
             taggersClickable.gameObject.SetActive(false);
             runnersClickable.gameObject.SetActive(false);
+
         }
 
+    }
+
+
+    public void OnResetBallPosition()
+    {
+        GameBall.transform.position = ResetBallPosition.transform.position;
     }
 
     public void OnplayerClickStart(MLPlayer player)
@@ -187,25 +218,39 @@ public class DodgeBallGameManager : MonoBehaviour
         UpdateTeamText();
     }
 
+
     private void TeleportPlayersToArena()
     {
         MLPlayer localPlayer = MassiveLoopRoom.GetLocalPlayer();
+        MLPlayer[] playersArray = MassiveLoopRoom.FindPlayersInCollider(ArenaCollider);
+        
+
+        // Check if the localPlayer has a valid "team" property
         if (localPlayer.GetProperty("team") != null)
         {
+            // If the player is already in the arena, do nothing
+            if (playersArray.Contains(localPlayer))
+            {
+                UnityEngine.Debug.Log("Local player is already in the arena, skipping teleport.");
+                return;
+            }
+
             UnityEngine.Debug.Log("Get Property on local player did not return null");
-            if((string)localPlayer.GetProperty("team") == "Red")
+            string team = (string)localPlayer.GetProperty("team");
+            if (team == "Red" && !playersArray.Contains(localPlayer))
             {
                 UnityEngine.Debug.Log("Red team member found");
                 localPlayer.Teleport(RedTeleportObjectLocation.transform.position);
             }
-            if((string)localPlayer.GetProperty("team") == "Blue")
+            else if (team == "Blue" && !playersArray.Contains(localPlayer))
             {
                 UnityEngine.Debug.Log("Blue team member found");
                 localPlayer.Teleport(BlueTeleportObjectLocation.transform.position);
             }
         }
 
-        /*foreach (MLPlayer player in playersArray)
+        /*
+        foreach (MLPlayer player in playersArray)
         {
             string playerName = player.NickName;
 
@@ -214,16 +259,18 @@ public class DodgeBallGameManager : MonoBehaviour
 
             // Retrieve the player's team and teleport accordingly
             string team = (string)truePlayer.GetProperty("team");
-            if ((string)truePlayer.GetProperty("team") == "Blue")
+            if (team == "Blue")
             {
                 truePlayer.Teleport(BlueTeleportObjectLocation.transform.position);
             }
-            else if ((string)truePlayer.GetProperty("team") == "Red")
+            else if (team == "Red")
             {
                 truePlayer.Teleport(RedTeleportObjectLocation.transform.position);
             }
-        }*/
+        }
+        */
     }
+
 
     private void TeleportPlayersToSpawn()
     {
@@ -238,8 +285,8 @@ public class DodgeBallGameManager : MonoBehaviour
 
     private void UpdateTeamText()
     {
-        BlueTeamString.text = $"Blue Team: \n {string.Join(", ", blueTeam)}  \n";
-        RedTeamString.text = $"Red Team: \n {string.Join(", ", redTeam)}  \n";
+        BlueTeamString.text = $"Blue Team: \n {string.Join(", \n", blueTeam)}  \n";
+        RedTeamString.text = $"Red Team: \n {string.Join(", \n", redTeam)}  \n";
     }
 
     private void EndGame()
@@ -248,17 +295,29 @@ public class DodgeBallGameManager : MonoBehaviour
         int redTeamCount = redTeam.Count;
         isGameActive = false;
 
+        BluePortal.SetActive(true);
+        RedPortal.SetActive(true);
+
+        Tip.SetActive(false);
+
         if (blueTeamCount > redTeamCount)
         {
             GameStatusText.text = "Blue Team Wins!";
+            GameStatusText.color = Color.cyan;
+            BlueCelebration.SetActive(true);
+            RedCelebration.SetActive(false);
         }
         else if (redTeamCount > blueTeamCount)
         {
             GameStatusText.text = "Red Team Wins!";
+            GameStatusText.color = Color.red;
+            BlueCelebration.SetActive(false);
+            RedCelebration.SetActive(true);
         }
         else
         {
             GameStatusText.text = "It's a Tie!";
+            GameStatusText.color = Color.white;
         }
 
         this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN, EventTarget.All, null);
@@ -301,6 +360,7 @@ public class DodgeBallGameManager : MonoBehaviour
         }
         //Teleport the player back to spawn
         player.Teleport(RespawnPosition.transform.position);
+        player.SetProperty("team", "none");
 
         UpdateTeamText();
 
