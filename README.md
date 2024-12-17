@@ -92,3 +92,61 @@ This script adds dynamic interactivity to VR objects using the **MLGrab** system
 - When grabbing and releasing, the console logs the applied throw force for debugging:
   ```plaintext
   Object thrown with impulse force: [force_vector]
+
+
+# DodgeBall Game Manager in Unity
+
+## Overview
+
+The `DodgeBallGameManager` script manages a team-based dodgeball game in Unity. It controls player interactions, team assignments, game state management, teleportation, and scoring. This script uses **MassiveLoop SDK** for multiplayer support and **TextMeshPro** for UI updates.
+
+---
+
+## Key Features
+
+- **Team Selection**: Players are assigned to either the Blue or Red team.
+- **Game Start & End Management**: Handles game activation, countdown timers, and results.
+- **Teleportation**: Teleports players to the arena or back to spawn points.
+- **Scoring System**: Keeps track of team scores and updates the UI.
+- **Ball Reset**: Resets the game balls to their original position.
+
+---
+
+## Dependencies
+
+- **MassiveLoop SDK**: For multiplayer features (`MLPlayer`, `MLClickable`, and network events).
+- **TextMeshPro**: For displaying team details, scores, and timers.
+- **UnityEngine.UI**: Required for basic UI interaction.
+
+---
+
+## Script Breakdown
+
+### Variables
+
+| **Type**                   | **Name**                          | **Description** |
+|----------------------------|-----------------------------------|-----------------|
+| `GameObject`               | BlueTeleportObjectLocation        | Blue team's teleport location. |
+| `GameObject`               | RedTeleportObjectLocation         | Red team's teleport location. |
+| `GameObject`               | ResetBallPosition                 | Position to reset game balls. |
+| `GameObject`               | GameBall / GameBalls              | The game ball(s) in the arena. |
+| `ML.SDK.MLClickable`       | taggersClickable / runnersClickable | Clickables for selecting teams. |
+| `ML.SDK.MLClickable`       | StartGameClickable                | Clickable to start the game. |
+| `TextMeshPro`              | timeText                          | Displays the remaining time. |
+| `TextMeshPro`              | GameStatusText                    | Displays game status text. |
+| `TextMeshPro`              | BlueTeamString / RedTeamString    | Displays team members. |
+| `TextMeshPro`              | BlueTeamScore / RedTeamScore      | Displays team scores. |
+| `Stopwatch`                | stopwatch                         | Tracks elapsed game time. |
+| `List<string>`             | blueTeam / redTeam                | Holds player names for each team. |
+| `int`                      | blueTeamNumberScore / redTeamNumberScore | Tracks each team's score. |
+| `bool`                     | isGameActive                      | Game state flag. |
+| `Collider`                 | ArenaCollider                     | Arena collider for teleport checks. |
+| `GameObject`               | BlueCelebration / RedCelebration  | Celebration effects for winning teams. |
+
+---
+
+### Key Methods
+
+#### 1. **OnStartGameEvent**
+```csharp
+public void OnStartGameEvent(object[] args)
