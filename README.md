@@ -1,5 +1,5 @@
-# Unity VR C# TableTennis CodeBase
- Table tennis project in C#
+# Massive Loop Unity C# Brandon's Code collection
+ Repo of Multiple projects in Unity C# for Massive Loop.
 
 This is a small fun project made with the Massive Loop SDK for a Massive Loop game world!
 
@@ -149,4 +149,201 @@ The `DodgeBallGameManager` script manages a team-based dodgeball game in Unity. 
 
 #### 1. **OnStartGameEvent**
 ```csharp
-public void OnStartGameEvent(object[] args)
+    public void OnStartGameEvent(object[] args)
+    {
+        GameStatusText.text = "Game Active";
+        GameStatusText.color = Color.green;
+
+        isGameActive = true;
+        stopwatch.Start();
+        TeleportPlayersToArena();
+
+        Tip.SetActive(true);
+
+        BluePortal.SetActive(false);
+        RedPortal.SetActive(false);
+
+        BlueCelebration.SetActive(false);
+        RedCelebration.SetActive(false);
+
+        if (isGameActive == true)
+        {
+            taggersClickable.gameObject.SetActive(false);
+            runnersClickable.gameObject.SetActive(false);
+
+        }
+
+    }
+```
+- **Purpose**: Activates the game, starts the timer, and teleports players into the arena.
+- **Actions**: Updates game status text.
+Starts the stopwatch.
+Disables team-selection buttons.
+Hides portals and celebrations.
+
+#### 2. **OnResetBallPosition**
+```csharp
+    public void OnResetBallPosition()
+    {
+        foreach( GameObject b in GameBalls)
+        {
+            b.transform.position = ResetBallPosition.transform.position;
+        }
+    }
+```
+- **Purpose**: Resets all game balls to their default position.
+- **Actions**: Iterates through GameBalls and moves each ball to ResetBallPosition.
+
+#### 3. **AssignTeam**
+```csharp
+    private void AssignTeam(MLPlayer player, string team)
+    {
+        string playerName = player.NickName;
+        this.InvokeNetwork(EVENT_SELECT_TEAM, EventTarget.All, null, playerName, team);
+        UpdateTeamLocally(playerName, team);
+    }
+```
+- **Purpose**: Assigns a player to a team and synchronizes the assignment across the network.
+- **Actions**: Updates player team property.
+Updates team lists (locally).
+Refreshes the team display UI.
+
+#### 4. **TeleportPlayersToArena**
+```csharp
+    private void TeleportPlayersToArena()
+    {
+        MLPlayer localPlayer = MassiveLoopRoom.GetLocalPlayer();
+        MLPlayer[] playersArray = MassiveLoopRoom.FindPlayersInCollider(ArenaCollider);
+        
+
+        // Check if the localPlayer has a valid "team" property
+        if (localPlayer.GetProperty("team") != null)
+        {
+            // If the player is already in the arena, do nothing
+            if (playersArray.Contains(localPlayer))
+            {
+                UnityEngine.Debug.Log("Local player is already in the arena, skipping teleport.");
+                return;
+            }
+
+            UnityEngine.Debug.Log("Get Property on local player did not return null");
+            string team = (string)localPlayer.GetProperty("team");
+            if (team == "Red" && !playersArray.Contains(localPlayer))
+            {
+                UnityEngine.Debug.Log("Red team member found");
+                localPlayer.Teleport(RedTeleportObjectLocation.transform.position);
+            }
+            else if (team == "Blue" && !playersArray.Contains(localPlayer))
+            {
+                UnityEngine.Debug.Log("Blue team member found");
+                localPlayer.Teleport(BlueTeleportObjectLocation.transform.position);
+            }
+        }
+    }
+```
+- **Purpose**: Teleports players to their respective team's teleportation position based on their assigned team.
+- **Actions**: Checks player properties (team) and teleports them to RedTeleportObjectLocation or BlueTeleportObjectLocation.
+
+#### 5. **UpdateTeamText**
+```csharp
+    private void UpdateTeamText()
+    {
+        BlueTeamString.text = $"Blue Team: \n {string.Join(", \n", blueTeam)}  \n";
+        RedTeamString.text = $"Red Team: \n {string.Join(", \n", redTeam)}  \n";
+    }
+```
+- **Purpose**:  Updates the UI display for both teams.
+- **Actions**: Combines team member names into formatted strings.
+Updates BlueTeamString and RedTeamString.
+
+#### 6. **EndGame**
+```csharp
+    private void EndGame()
+    {
+        int blueTeamCount = blueTeam.Count;
+        int redTeamCount = redTeam.Count;
+        isGameActive = false;
+
+        BluePortal.SetActive(true);
+        RedPortal.SetActive(true);
+
+        Tip.SetActive(false);
+
+        if (blueTeamCount > redTeamCount)
+        {
+            GameStatusText.text = "Blue Team Wins!";
+            GameStatusText.color = Color.cyan;
+            BlueCelebration.SetActive(true);
+            RedCelebration.SetActive(false);
+
+            blueTeamNumberScore += 1;
+            BlueTeamScore.text = blueTeamNumberScore.ToString();
+        }
+        else if (redTeamCount > blueTeamCount)
+        {
+            GameStatusText.text = "Red Team Wins!";
+            GameStatusText.color = Color.red;
+            BlueCelebration.SetActive(false);
+            RedCelebration.SetActive(true);
+
+            redTeamNumberScore += 1;
+            RedTeamScore.text = redTeamNumberScore.ToString();
+
+        }
+        else
+        {
+            GameStatusText.text = "It's a Tie!";
+            GameStatusText.color = new Color(255f / 255f, 97f / 255f, 0f / 255f, 1f); // RGBA
+
+        }
+
+        this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN, EventTarget.All, null);
+        ResetGame();
+    }
+```
+- **Purpose**:  Ends the game, calculates winners, and resets the state.
+- **Actions**: Stops the stopwatch.
+Determines the winning team (or a tie).
+Activates celebration effects and updates scores.
+Teleports players back to spawn.
+
+
+#### 7. **ResetGame**
+```csharp
+    private void ResetGame()
+    {
+        blueTeam.Clear();
+        redTeam.Clear();
+        UpdateTeamText();
+        stopwatch.Reset();
+
+
+        MLPlayer localPlayer = MassiveLoopRoom.GetLocalPlayer();
+        localPlayer.SetProperty("team", "none");
+
+
+        if (isGameActive == false)
+        {
+            taggersClickable.gameObject.SetActive(true);
+            runnersClickable.gameObject.SetActive(true);
+        }
+
+    }
+```
+- **Purpose**:   Fully resets the game state.
+- **Actions**: Clears team lists.
+Resets scores, UI, and game state.
+Re-enables team selection clickables.
+Hides victory effects.
+
+---
+
+
+### Usage Instructions
+1. Attach the DodgeBallGameManager script to an empty GameManager object in your Unity scene.
+2. Assign the required GameObjects, Clickables, and TextMeshPro fields in the inspector.
+3. Ensure the MassiveLoop SDK is installed for multiplayer functionality.
+4. Use taggersClickable and runnersClickable to allow players to choose their teams.
+5. Trigger OnStartGameEvent to start the game.
+
+
