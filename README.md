@@ -353,7 +353,7 @@ Hides victory effects.
 # Networking Events in Massive Loop 101
 The script utilizes MassiveLoop SDK networking events to synchronize actions across all clients.
 #### Event Definitions
-```
+```csharp
 const string EVENT_SELECT_TEAM = "TeamSelectEvent";
 const string EVENT_START_GAME = "EventStartGame";
 const string EVENT_TELEPORT_PLAYERS_INTO_ARENA = "TeleportPlayersEvent";
@@ -363,10 +363,66 @@ These constants represent event names used for invoking and handling networking 
 
 #### Event Tokens
 Event tokens register callbacks to specific network events:
-```
+```csharp
 tokenSelectTeam = this.AddEventHandler(EVENT_SELECT_TEAM, OnTeamSelectEvent);
 tokenStartGame = this.AddEventHandler(EVENT_START_GAME, OnStartGameEvent);
 tokenTeleportPlayers = this.AddEventHandler(EVENT_TELEPORT_PLAYERS_INTO_ARENA, OnTeleportPlayers);
 tokenTeleportPlayers_backToSpawn = this.AddEventHandler(EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN, OnTeleportPlayersBackToSpawn);
 ```
 Usually, it is best to include these in your start function, that way each network oriented event is available almost right away during run-time. The AddEventHandler registers methods like OnTeamSelectEvent to respond to specific events when they are invoked.
+
+#### Example Usage
+
+Take this code for example :
+```csharp
+private void AssignTeam(MLPlayer player, string team)
+{
+    string playerName = player.NickName;
+    this.InvokeNetwork(EVENT_SELECT_TEAM, EventTarget.All, null, playerName, team);
+    UpdateTeamLocally(playerName, team);
+}
+
+```
+Updating a player's team is something that we certainly want each client to see. Therefore, we call ```this.InvokeNetwork(EVENT_SELECT_TEAM, EventTarget.All, null, playerName, team);``` 
+
+Where the general structure of the invokeNetwork call first asks for the event name that we registered the callback to. ```EVENT_SELECT_TEAM```
+
+Then we set our target. ```EventTarget.All```
+Note that there are multiple options that are available to you here :
+* Player - Targets a specific player in the game. The event is sent only to that player's client.
+* OnlyThisClient - Targets only the local client where the method is called.
+* Master - Targets the master client (or host), often the authoritative client in the network session.
+* All - Targets all clients connected to the session, including the one that invoked the event.
+* Others -  Targets all clients except the one that invoked the event.
+
+| **EventTarget**       | **Description**                               | **Example Use Case**                       |
+|------------------------|----------------------------------------------|-------------------------------------------|
+| **Player**            | Targets a specific player                   | Sending player-specific updates           |
+| **OnlyThisClient**    | Local client only                           | Local UI or HUD updates                   |
+| **Master**            | Master client (authoritative client)        | Spawning, validation, centralized logic   |
+| **All**               | All clients, including the sender           | Global events, game start, animations     |
+| **Others**            | All clients except the sender               | Sync player movement, broadcast events    |
+
+### Passing Variables with `InvokeNetwork`
+
+When calling `InvokeNetwork`, you can pass variables as the third parameter, which will be accessible in the event handler:
+
+```csharp
+this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_INTO_ARENA, EventTarget.All, new object[] { variable1, variable2 });
+```
+Third Parameter: An object[] array containing any variables you want to pass. The variables can be accessed through the object[] args parameter.
+
+```csharp
+// Sending the event with variables
+this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_INTO_ARENA, EventTarget.All, new object[] { "Arena1", 10 });
+
+// Receiving the event
+public void OnStartGameEvent(object[] args)
+{
+    string arenaName = (string)args[0];
+    int playerCount = (int)args[1];
+    
+    Debug.Log($"Teleporting {playerCount} players to {arenaName}");
+}
+
+```
