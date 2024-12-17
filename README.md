@@ -350,7 +350,7 @@ Hides victory effects.
 
 
 
-# Networking Events 101
+# Networking Events in Massive Loop 101
 The script utilizes MassiveLoop SDK networking events to synchronize actions across all clients.
 #### Event Definitions
 ```
