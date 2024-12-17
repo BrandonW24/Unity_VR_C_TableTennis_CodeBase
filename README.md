@@ -1,4 +1,4 @@
-# Massive Loop Unity C# Brandon's Code collection
+# Massive Loop Unity C# Brandon's Code Collection
  Repo of Multiple projects in Unity C# for Massive Loop.
 
 This is a small fun project made with the Massive Loop SDK for a Massive Loop game world!
@@ -336,6 +336,8 @@ Resets scores, UI, and game state.
 Re-enables team selection clickables.
 Hides victory effects.
 
+
+
 ---
 
 
@@ -347,3 +349,24 @@ Hides victory effects.
 5. Trigger OnStartGameEvent to start the game.
 
 
+
+# Networking Events 101
+The script utilizes MassiveLoop SDK networking events to synchronize actions across all clients.
+#### Event Definitions
+```
+const string EVENT_SELECT_TEAM = "TeamSelectEvent";
+const string EVENT_START_GAME = "EventStartGame";
+const string EVENT_TELEPORT_PLAYERS_INTO_ARENA = "TeleportPlayersEvent";
+const string EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN = "TeleportPlayersEvent_BackToSpawn";
+```
+These constants represent event names used for invoking and handling networking events.
+
+#### Event Tokens
+Event tokens register callbacks to specific network events:
+```
+tokenSelectTeam = this.AddEventHandler(EVENT_SELECT_TEAM, OnTeamSelectEvent);
+tokenStartGame = this.AddEventHandler(EVENT_START_GAME, OnStartGameEvent);
+tokenTeleportPlayers = this.AddEventHandler(EVENT_TELEPORT_PLAYERS_INTO_ARENA, OnTeleportPlayers);
+tokenTeleportPlayers_backToSpawn = this.AddEventHandler(EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN, OnTeleportPlayersBackToSpawn);
+```
+Usually, it is best to include these in your start function, that way each network oriented event is available almost right away during run-time. The AddEventHandler registers methods like OnTeamSelectEvent to respond to specific events when they are invoked.
