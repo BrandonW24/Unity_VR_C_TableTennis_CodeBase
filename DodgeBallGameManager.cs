@@ -42,6 +42,8 @@ public class DodgeBallGameManager : MonoBehaviour
     public TextMeshPro GameStatusText;
     public TextMeshPro BlueTeamString;
     public TextMeshPro RedTeamString;
+    public TextMeshPro BlueTeamScore;
+    public TextMeshPro RedTeamScore;
 
     private Stopwatch stopwatch;
     private List<string> blueTeam = new List<string>();
@@ -67,6 +69,10 @@ public class DodgeBallGameManager : MonoBehaviour
     public GameObject RedCelebration;
     public GameObject Tip;
     public Collider ArenaCollider;
+    public GameObject[] GameBalls;
+
+    private int blueTeamNumberScore;
+    private int redTeamNumberScore;
 
     public void OnStartGameEvent(object[] args)
     {
@@ -100,14 +106,22 @@ public class DodgeBallGameManager : MonoBehaviour
 
     public void OnResetBallPosition()
     {
-        GameBall.transform.position = ResetBallPosition.transform.position;
+     //   GameBall.transform.position = ResetBallPosition.transform.position;
+
+        foreach( GameObject b in GameBalls)
+        {
+            b.transform.position = ResetBallPosition.transform.position;
+        }
     }
 
     public void OnplayerClickStart(MLPlayer player)
     {
         // Player started the game
-        this.InvokeNetwork(EVENT_START_GAME, EventTarget.All, null);
-        this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_INTO_ARENA, EventTarget.All, null);
+        if(player.GetProperty("team") != null && (string)player.GetProperty("team") != "none")
+        {
+            this.InvokeNetwork(EVENT_START_GAME, EventTarget.All, null);
+            this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_INTO_ARENA, EventTarget.All, null);
+        }
     }
 
     public void OnTeleportPlayers(object[] args)
@@ -161,9 +175,23 @@ public class DodgeBallGameManager : MonoBehaviour
             {
                 timeText.text = $"Time: \n {remainingTime:F2} \n ";
             }
+
+            if (blueTeam.Count == 0)
+            {
+                stopwatch.Stop();
+                EndGame();
+
+            }
+            else if (redTeam.Count == 0)
+            {
+                stopwatch.Stop();
+                EndGame();
+
+            }
+
         }
 
-        
+
     }
 
     private void AssignTeam(MLPlayer player, string team)
@@ -306,6 +334,9 @@ public class DodgeBallGameManager : MonoBehaviour
             GameStatusText.color = Color.cyan;
             BlueCelebration.SetActive(true);
             RedCelebration.SetActive(false);
+
+            blueTeamNumberScore += 1;
+            BlueTeamScore.text = blueTeamNumberScore.ToString();
         }
         else if (redTeamCount > blueTeamCount)
         {
@@ -313,11 +344,16 @@ public class DodgeBallGameManager : MonoBehaviour
             GameStatusText.color = Color.red;
             BlueCelebration.SetActive(false);
             RedCelebration.SetActive(true);
+
+            redTeamNumberScore += 1;
+            RedTeamScore.text = redTeamNumberScore.ToString();
+
         }
         else
         {
             GameStatusText.text = "It's a Tie!";
-            GameStatusText.color = Color.white;
+            GameStatusText.color = new Color(255f / 255f, 97f / 255f, 0f / 255f, 1f); // RGBA
+
         }
 
         this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_BACK_TO_SPAWN, EventTarget.All, null);
