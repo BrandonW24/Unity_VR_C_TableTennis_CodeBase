@@ -46,6 +46,9 @@ public class DodgeballScript : MonoBehaviour
 
     private DodgeBallGameManager DodgeBallGameManagerSCRIPTReference;
 
+    private bool isThrown = false; // Flag to indicate if the object is thrown
+    private Vector3 throwForce = Vector3.zero; // Store the calculated throw force
+
     private void Start()
     {
         // Setup event listeners
@@ -70,6 +73,28 @@ public class DodgeballScript : MonoBehaviour
 
     }
 
+    private void Update()
+    {
+
+        // Handle ball reset during game state changes
+        if (DodgeBallGameManagerSCRIPTReference.isGameActive == false)
+        {
+            DodgeBallGameManagerSCRIPTReference.OnResetBallPosition();
+            grabComponent.ForceRelease();
+            ballRigidbody.isKinematic = true;
+        }
+        else if (DodgeBallGameManagerSCRIPTReference.isGameActive == true)
+        {
+            ballRigidbody.isKinematic = false;
+        }
+
+        if (MassiveLoopRoom.GetLocalPlayer() != grabComponent.CurrentUser)
+        {
+
+        }
+
+
+    }
 
     private void FixedUpdate()
     {
@@ -79,31 +104,36 @@ public class DodgeballScript : MonoBehaviour
             AdjustSizeBasedOnGrab();
         }
 
-        // Update last position while object is held
-        if (isHeld && grabComponent.PrimaryHand)
+        // Apply throw force if the object has been thrown
+        if (isThrown)
         {
-            lastPosition = grabComponent.PrimaryHand.transform.position;
-        }
+            // Immediately reset the flag to prevent multiple applications
+            isThrown = false;
 
-        if (DodgeBallGameManagerSCRIPTReference.isGameActive == false)
-        {
-            DodgeBallGameManagerSCRIPTReference.OnResetBallPosition();
-            grabComponent.ForceRelease();
-            ballRigidbody.isKinematic = true;
-        }else if(DodgeBallGameManagerSCRIPTReference.isGameActive == true)
-        {
-            ballRigidbody.isKinematic = false;
-        }
+            // Calculate the release direction based on the hand's orientation
+            Vector3 releaseDirection = transform.forward;
 
-        /*
-        if (MassiveLoopClient.IsInDesktopMode)
-        { 
-            if(player.UserInput != null)
+            // Scale the release force
+            throwForce = releaseDirection * throwForceMultiplier;
+
+            // Clamp the force to a maximum value
+            if (throwForce.magnitude > maxThrowForce)
             {
-                if(player.UserInput.ALT)
+                throwForce = throwForce.normalized * maxThrowForce;
             }
-        }*/
+
+            // Apply the impulse force to the Rigidbody
+            objectRigidbody.isKinematic = false; // Ensure the Rigidbody is dynamic
+            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
+
+            // Debug information for validation
+            Debug.Log($"Object thrown with impulse force: {throwForce}");
+
+            // Reset throwForce to avoid unintended force in the next frame
+            throwForce = Vector3.zero;
+        }
     }
+
 
 
     private void OnPrimaryTriggerDown()
@@ -152,14 +182,12 @@ public class DodgeballScript : MonoBehaviour
 
         if (isHeld && objectRigidbody != null)
         {
-            // Ensure Rigidbody is dynamic
-            objectRigidbody.isKinematic = false;
-
+            /*
             // Calculate the release direction based on the hand's orientation
             Vector3 releaseDirection = grabComponent.PrimaryHand.transform.forward;
 
             // Scale the release force
-            Vector3 throwForce = releaseDirection * throwForceMultiplier;
+            throwForce = releaseDirection * throwForceMultiplier;
 
             // Clamp the force to a maximum value
             if (throwForce.magnitude > maxThrowForce)
@@ -167,20 +195,17 @@ public class DodgeballScript : MonoBehaviour
                 throwForce = throwForce.normalized * maxThrowForce;
             }
 
-            // Apply the force as an impulse
-        //    objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
-            Debug.Log($"Object thrown with impulse force: {throwForce}");
-            this.InvokeNetwork(EVENT_ID_Throw, EventTarget.All, null, throwForce, this.gameObject.GetInstanceID());
+            */
+            // Trigger physics update in FixedUpdate
+            isThrown = true;
 
-
-            // Debug visualization for force direction
-            //    Debug.DrawRay(transform.position, releaseDirection * 2.0f, Color.red, 2.0f);
-           
-            //   this.InvokeNetwork(EVENT_ID_Throw, EventTarget.Master, null, throwForce);
+            // Optionally invoke a network event
+            this.InvokeNetwork(EVENT_ID_Throw, EventTarget.All, null, this.gameObject.GetInstanceID());
         }
 
         isHeld = false; // Reset the held flag
     }
+
     private void OnSecondaryGrabBegin()
     {
         if (grabComponent.PrimaryHand && grabComponent.SecondaryHand)
@@ -221,18 +246,12 @@ public class DodgeballScript : MonoBehaviour
 
     private void OnThrowEvent(object[] args)
     {
-        Debug.Log($"Throw event triggered. Passed in force amount : {(Vector3)args[0]}");
+     //   Debug.Log($"Throw event triggered. Passed in force amount : {(Vector3)args[0]}");
 
-        if ((int)args[1] != this.gameObject.GetInstanceID() || this.gameObject == null)
-        {
-            return;
-        }
 
-        if (this == null || gameObject == null || gameObject.name == null || args[0] == null)
-        {
-            return;
-        }
+        isThrown = true;
 
+        /*
         // Calculate the release direction based on the hand's orientation
         Vector3 releaseDirection = this.gameObject.transform.forward;
 
@@ -251,10 +270,7 @@ public class DodgeballScript : MonoBehaviour
         //    this.gameObject.RequestOwnership();
             objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
         }
-        else
-        {
-            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
-        }
+        */
 
 
     }
