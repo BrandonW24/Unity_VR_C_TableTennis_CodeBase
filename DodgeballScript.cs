@@ -75,7 +75,7 @@ public class DodgeballScript : MonoBehaviour
 
     private void Update()
     {
-
+        /*
         // Handle ball reset during game state changes
         if (DodgeBallGameManagerSCRIPTReference.isGameActive == false)
         {
@@ -87,13 +87,7 @@ public class DodgeballScript : MonoBehaviour
         {
             ballRigidbody.isKinematic = false;
         }
-
-        if (MassiveLoopRoom.GetLocalPlayer() != grabComponent.CurrentUser)
-        {
-
-        }
-
-
+        */
     }
 
     private void FixedUpdate()
@@ -246,10 +240,39 @@ public class DodgeballScript : MonoBehaviour
 
     private void OnThrowEvent(object[] args)
     {
-     //   Debug.Log($"Throw event triggered. Passed in force amount : {(Vector3)args[0]}");
+        //   Debug.Log($"Throw event triggered. Passed in force amount : {(Vector3)args[0]}");
 
 
         isThrown = true;
+
+        // Apply throw force if the object has been thrown
+        if (isThrown)
+        {
+            // Immediately reset the flag to prevent multiple applications
+            isThrown = false;
+
+            // Calculate the release direction based on the hand's orientation
+            Vector3 releaseDirection = transform.forward;
+
+            // Scale the release force
+            throwForce = releaseDirection * throwForceMultiplier;
+
+            // Clamp the force to a maximum value
+            if (throwForce.magnitude > maxThrowForce)
+            {
+                throwForce = throwForce.normalized * maxThrowForce;
+            }
+
+            // Apply the impulse force to the Rigidbody
+            objectRigidbody.isKinematic = false; // Ensure the Rigidbody is dynamic
+            objectRigidbody.AddForce(throwForce, ForceMode.Impulse);
+
+            // Debug information for validation
+            Debug.Log($"Object thrown with impulse force: {throwForce}");
+
+            // Reset throwForce to avoid unintended force in the next frame
+            throwForce = Vector3.zero;
+        }
 
         /*
         // Calculate the release direction based on the hand's orientation

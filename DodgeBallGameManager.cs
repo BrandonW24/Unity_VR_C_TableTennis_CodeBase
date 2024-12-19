@@ -83,6 +83,7 @@ public class DodgeBallGameManager : MonoBehaviour
         GameStatusText.color = Color.green;
 
         isGameActive = true;
+        OnResetBallPosition();
         stopwatch.Start();
         TeleportPlayersToArena();
 
@@ -106,18 +107,30 @@ public class DodgeBallGameManager : MonoBehaviour
 
     public void OnResetBallPosition()
     {
-     //   GameBall.transform.position = ResetBallPosition.transform.position;
-
         foreach( GameObject b in GameBalls)
         {
-            b.transform.position = ResetBallPosition.transform.position;
+            
+            if (isGameActive == true)
+            {
+                b.transform.position = ResetBallPosition.transform.position;
+                Rigidbody rb = b.GetComponent<Rigidbody>();
+                rb.isKinematic = false;
+            }
+            else
+            {
+                b.transform.position = ResetBallPosition.transform.position;
+                Rigidbody rb = b.GetComponent<Rigidbody>();
+                rb.isKinematic = true;
+
+            }
+           
         }
     }
 
     public void OnplayerClickStart(MLPlayer player)
     {
         // Player started the game
-        if(player.GetProperty("team") != null && (string)player.GetProperty("team") != "none")
+        if(player.GetProperty("team") != null && (string)player.GetProperty("team") != "none" && blueTeam.Count > 0 && redTeam.Count > 0)
         {
             this.InvokeNetwork(EVENT_START_GAME, EventTarget.All, null);
             this.InvokeNetwork(EVENT_TELEPORT_PLAYERS_INTO_ARENA, EventTarget.All, null);
@@ -197,16 +210,6 @@ public class DodgeBallGameManager : MonoBehaviour
     private void AssignTeam(MLPlayer player, string team)
     {
         string playerName = player.NickName;
-
-      //  player.SetProperty("team", team); // Assign the team property
-
-        // Add the player to the playersArray if not already added
-        /*if (!playersArray.Contains(player))
-        {
-            playersArray.Add(player);
-        }*/
-
-        // Synchronize team assignment across all players
         this.InvokeNetwork(EVENT_SELECT_TEAM, EventTarget.All, null, playerName, team);
         UpdateTeamLocally(playerName, team);
     }
@@ -276,27 +279,6 @@ public class DodgeBallGameManager : MonoBehaviour
                 localPlayer.Teleport(BlueTeleportObjectLocation.transform.position);
             }
         }
-
-        /*
-        foreach (MLPlayer player in playersArray)
-        {
-            string playerName = player.NickName;
-
-            // Use FindPlayerByName to ensure we're working with the correct player object
-            MLPlayer truePlayer = MassiveLoopRoom.FindPlayerByName(playerName);
-
-            // Retrieve the player's team and teleport accordingly
-            string team = (string)truePlayer.GetProperty("team");
-            if (team == "Blue")
-            {
-                truePlayer.Teleport(BlueTeleportObjectLocation.transform.position);
-            }
-            else if (team == "Red")
-            {
-                truePlayer.Teleport(RedTeleportObjectLocation.transform.position);
-            }
-        }
-        */
     }
 
 
@@ -322,7 +304,7 @@ public class DodgeBallGameManager : MonoBehaviour
         int blueTeamCount = blueTeam.Count;
         int redTeamCount = redTeam.Count;
         isGameActive = false;
-
+        OnResetBallPosition();
         BluePortal.SetActive(true);
         RedPortal.SetActive(true);
 
@@ -415,7 +397,6 @@ public class DodgeBallGameManager : MonoBehaviour
         {
             redTeam.Remove(playerName);
         }
-
         // Remove the player from the playersArray
         /*if (playersArray.Contains(player))
         {
