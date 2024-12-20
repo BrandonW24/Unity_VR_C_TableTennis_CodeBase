@@ -44,6 +44,9 @@ public class DodgeballScript : MonoBehaviour
     const string EVENT_HIT = "HitEvent";
     private EventToken tokenHit;
 
+    const string EVENT_CHANGE_COLOR = "ChangeColor";
+    private EventToken tokenChange;
+
     private DodgeBallGameManager DodgeBallGameManagerSCRIPTReference;
 
     private bool isThrown = false; // Flag to indicate if the object is thrown
@@ -60,6 +63,7 @@ public class DodgeballScript : MonoBehaviour
 
         tokenThrow = this.AddEventHandler(EVENT_ID_Throw, OnThrowEvent);
         tokenHit = this.AddEventHandler(EVENT_HIT, OnHitEvent);
+        tokenChange = this.AddEventHandler(EVENT_CHANGE_COLOR, OnChangeColor);
 
         // Ensure Rigidbody is attached
         objectRigidbody = objectToChange.GetComponent<Rigidbody>();
@@ -88,6 +92,27 @@ public class DodgeballScript : MonoBehaviour
             ballRigidbody.isKinematic = false;
         }
         */
+    }
+
+    private void OnChangeColor(object[] args)
+    {
+        if (this == null || gameObject == null || gameObject.name == null || args[0] == null)
+        {
+            return;
+        }
+
+        if ((string)args[1] == "Blue")
+        {
+            MeshRenderer meshRenderReference = (MeshRenderer)this.gameObject.GetComponent(typeof(MeshRenderer));
+            meshRenderReference.material = BlueTeamMaterial;
+
+        }
+        else if ((string)args[1] == "Red")
+        {
+            MeshRenderer meshRenderReference = (MeshRenderer)this.gameObject.GetComponent(typeof(MeshRenderer));
+            meshRenderReference.material = RedTeamMaterial;
+        }
+
     }
 
     private void FixedUpdate()
@@ -149,18 +174,19 @@ public class DodgeballScript : MonoBehaviour
                 objectToChange.transform.parent = grabComponent.PrimaryHand.transform;
             }
 
-
             if ((string)currentUser.GetProperty("team") == "Blue")
             {
                 MeshRenderer meshRenderReference = (MeshRenderer)this.gameObject.GetComponent(typeof(MeshRenderer));
                 meshRenderReference.material = BlueTeamMaterial;
+                this.InvokeNetwork(EVENT_CHANGE_COLOR, EventTarget.All, null,  this.gameObject.GetInstanceID(), "Blue");
            //     LineRenderer.startColor = Color.blue;
 
             }else if ((string) currentUser.GetProperty("team") == "Red")
             {
                 MeshRenderer meshRenderReference = (MeshRenderer)this.gameObject.GetComponent(typeof(MeshRenderer));
                 meshRenderReference.material = RedTeamMaterial;
-            //    LineRenderer.startColor = Color.red;
+                this.InvokeNetwork(EVENT_CHANGE_COLOR, EventTarget.All, null, this.gameObject.GetInstanceID(), "Red");
+                //    LineRenderer.startColor = Color.red;
 
             }
         }
