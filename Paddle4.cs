@@ -104,7 +104,7 @@ public class Paddle4 : MonoBehaviour
                 {
                     Debug.Log("SphereCast detected the ball. Applying force.");
                     Vector3 pushForce = paddleVelocity.normalized * Mathf.Clamp(paddleVelocity.magnitude * forceMultiplier, 0.1f, 1f);
-                    ballRigidbody.AddForce(pushForce * 25, ForceMode.Force);
+                    ballRigidbody.AddForce(pushForce * 45, ForceMode.Force);
                 }
             }
         }
@@ -112,10 +112,16 @@ public class Paddle4 : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        Debug.Log("Low-velocity nudge from oncollisionstay! Applying continuous push force.");
-        Vector3 pushForce = paddleVelocity.normalized * Mathf.Clamp(paddleVelocity.magnitude * forceMultiplier, 0.1f, 1f);
-        ballRigidbody.AddForce(pushForce * 25, ForceMode.Force);
-        this.InvokeNetwork(EVENT_ID_Hit_2, EventTarget.Master, null);
+
+        if (collision.gameObject == ball)
+        {
+
+            Debug.Log("Low-velocity nudge from oncollisionstay! Applying continuous push force.");
+            Vector3 pushForce = paddleVelocity.normalized * Mathf.Clamp(paddleVelocity.magnitude * forceMultiplier, 0.1f, 1f);
+            ballRigidbody.AddForce(pushForce * 45, ForceMode.Force);
+            this.InvokeNetwork(EVENT_ID_Hit_2, EventTarget.Master, null);
+
+        }
 
     }
 
@@ -256,10 +262,12 @@ public class Paddle4 : MonoBehaviour
                         }
                         else // Low-velocity nudge
                         {
+                            /*
                             Debug.Log("Low-velocity nudge! Applying continuous push force.");
                             Vector3 pushForce = paddleVelocity.normalized * Mathf.Clamp(paddleVelocity.magnitude * forceMultiplier, 0.1f, 1f);
                             ballRigidbody.AddForce(pushForce * 25, ForceMode.Force);
                             this.InvokeNetwork(EVENT_ID_Hit_2, EventTarget.Master, null);
+                            */
                         }
 
 
